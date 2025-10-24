@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Galaxy Rotation Curve & Dark Matter Halo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      margin: 0;
+      background: #05070d;
+      color: #eaeaea;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+    .container {
+      max-width: 800px;
+      margin: 3rem auto;
+      padding: 2rem;
+      border-radius: 20px;
+      background: radial-gradient(circle at center, #0b0e18 0%, #05070d 100%);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+    }
+    .canvas-wrapper {
+      position: relative;
+      width: 100%;
+      padding-top: 50%;
+    }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .slider-section {
+      text-align: center;
+      margin-top: 2rem;
+    }
+    input[type="range"] {
+      width: 70%;
+      appearance: none;
+      height: 8px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #ff4b4b 0%, #1976d2 100%);
+      outline: none;
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #fff 0%, #00b4d8 80%);
+      box-shadow: 0 0 15px #00b4d8, 0 0 20px #ff4b4b;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      border: 2px solid #fff;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.3);
+      box-shadow: 0 0 25px #00b4d8, 0 0 30px #ff4b4b;
+    }
+    #caption {
+      color: #bbb;
+      margin-top: 0.3rem;
+      font-size: 0.95rem;
+      font-style: italic;
+    }
+    .slider-section label {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #00b4d8;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="canvas-wrapper">
+      <canvas id="galaxyCanvas"></canvas>
+      <canvas id="chartCanvas"></canvas>
+    </div>
+
+    <div class="slider-section">
+      <label for="dmSlider"><b>Add Dark Matter</b></label>
+      <br />
+      <input type="range" id="dmSlider" min="0" max="1" step="0.01" value="0" />
+      <div id="caption">
+        Classical Newtonian motion → rotation speed falls with distance.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const galaxyCanvas = document.getElementById("galaxyCanvas");
+    const chartCanvas = document.getElementById("chartCanvas");
+    const gctx = galaxyCanvas.getContext("2d");
+
+    // Star initialization
+    const stars = [];
+    const STAR_COUNT = 400;
+    for (let i = 0; i < STAR_COUNT; i++) {
+      const r = Math.random() * 100; // Random radius
+      const angle = Math.random() * 2 * Math.PI; // Random angle
+      stars.push({
+        x: 0.5 + (r / 200) * Math.cos(angle), // Normalized x position
+        y: 0.5 + (r / 200) * Math.sin(angle), // Normalized y position
+        brightness: Math.random() * 0.8 + 0.2, // Random brightness
+        initialRadius: r // Store the initial radius for each star
+      });
+    }
+
+    // Function to draw the galaxy without the dark matter halo coloring
+    function drawGalaxy(dmFactor = 0) {
+      const w = galaxyCanvas.width;
+      const h = galaxyCanvas.height;
+      const cx = w / 2;
+      const cy = h / 2;
+      gctx.clearRect(0, 0, w, h);
+
+      // Draw the stars with updated positions
+      for (const s of stars) {
+        // Increase the radius based on dark matter factor
+        // Stars closer to the center (smaller initial radii) will move more
+        const radiusFactor = 1 + (dmFactor * (1 - (s.initialRadius / 100))); // Apply stronger change to stars near the center
+        const r = s.initialRadius * radiusFactor;
+
+        const x = s.x * w + r * Math.cos(Math.atan2(s.y - 0.5, s.x - 0.5)); // Update x position
+        const y = s.y * h + r * Math.sin(Math.atan2(s.y - 0.5, s.x - 0.5)); // Update y position
+        gctx.beginPath();
+        gctx.arc(x, y, 1.2, 0, 2 * Math.PI);
+        gctx.fillStyle = `rgba(255, 230, 180, ${s.brightness})`;
+        gctx.fill();
+      }
+    }
+
+    // Rotation curve data
+    const r_values = [1,2,3,4,5,6,7,8,9,10];
+    const observed_base = [1,1,1,1,1,1,1,1,1,1];
+    const expected_base = [1,0.71,0.58,0.5,0.45,0.41,0.38,0.35,0.33,0.32];
+
+    const ctx = chartCanvas.getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: r_values,
+        datasets: [
+          {
+            label: 'Observed Velocity',
+            data: observed_base,
+            borderColor: '#ff4b4b',
+            borderWidth: 4,
+            pointRadius: 4,
+            pointHoverRadius: 4,
+            pointBackgroundColor: '#ff4b4b',
+            tension: 0.35
+          },
+          {
+            label: 'Expected Velocity',
+            data: expected_base,
+            borderColor: '#00b4d8',
+            borderWidth: 4,
+            pointRadius: 4,
+            pointHoverRadius: 4,
+            pointBackgroundColor: '#00b4d8',
+            tension: 0.35
+          }
+        ]
+      },
+      options: {
+        maintainAspectRatio: false,
+        animation: { duration: 800, easing: 'easeOutQuart' },
+        plugins: {
+          legend: { position: 'bottom', labels: { color:'#fff', font:{size:14}, usePointStyle:true, pointStyle:'circle',  padding:15 } },
+          title: {
+            display: true,
+            color: '#fff',
+            font: { size: 18 }
+          }
+        },
+        scales: {
+          x: { title:{display:true,text:'Radius (arbitrary units)',color:'#fff', font:{size:14}}, grid:{color:'rgba(255,255,255,0.1)'}, ticks:{color:'#fff', font:{size:12}} },
+          y: { title:{display:true,text:'Velocity (arbitrary units)',color:'#fff', font:{size:14}}, min:0,max:1.2, grid:{color:'rgba(255,255,255,0.1)'}, ticks:{color:'#fff', font:{size:12}} }
+        }
+      }
+    });
+
+    // Slider event listener
+    const slider = document.getElementById('dmSlider');
+    const caption = document.getElementById('caption');
+
+    function resizeCanvases() {
+      const wrapper = document.querySelector('.canvas-wrapper');
+      const w = wrapper.clientWidth;
+      const h = wrapper.clientHeight;
+
+      galaxyCanvas.width = w;
+      galaxyCanvas.height = h;
+      chartCanvas.width = w;
+      chartCanvas.height = h;
+
+      drawGalaxy(parseFloat(slider.value));
+      chart.resize();
+    }
+
+    window.addEventListener('resize', resizeCanvases);
+
+    slider.addEventListener('input', () => {
+      const dm = parseFloat(slider.value);
+      const updated = expected_base.map((v,i)=>(1-dm)*v + dm*observed_base[i]);
+      chart.data.datasets[1].data = updated;
+      chart.update();
+      drawGalaxy(dm);
+
+      if (dm < 0.3) caption.textContent = "Classical Newtonian motion → rotation speed falls with distance.";
+      else if (dm < 0.7) caption.textContent = "Adding dark matter flattens the curve, keeping stars moving faster.";
+      else caption.textContent = "With full dark matter effect → rotation curve remains flat, and the halo extends far beyond visible stars.";
+    });
+
+    resizeCanvases();
+  </script>
+</body>
+</html>
