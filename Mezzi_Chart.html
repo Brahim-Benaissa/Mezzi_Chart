@@ -155,8 +155,8 @@
             label: 'Observed Velocity',
             data: observed_base,
             borderColor: '#ff4b4b',
-            borderWidth: 4,
-            pointRadius: 4,
+            borderWidth: 2,
+            pointRadius: 2,
             pointHoverRadius: 4,
             pointBackgroundColor: '#ff4b4b',
             tension: 0.35
@@ -165,8 +165,8 @@
             label: 'Expected Velocity',
             data: expected_base,
             borderColor: '#00b4d8',
-            borderWidth: 4,
-            pointRadius: 4,
+            borderWidth: 2,
+            pointRadius: 2,
             pointHoverRadius: 4,
             pointBackgroundColor: '#00b4d8',
             tension: 0.35
@@ -177,7 +177,18 @@
         maintainAspectRatio: false,
         animation: { duration: 800, easing: 'easeOutQuart' },
         plugins: {
-          legend: { position: 'bottom', labels: { color: '#fff', font: { size: 14 }, usePointStyle: true, pointStyle: 'circle', padding: 15 } },
+          legend: {
+            position: 'top', // ✅ Move legend to the top
+            labels: {
+              color: '#fff',
+              font: { size: 13 },
+              usePointStyle: true,
+              pointStyle: 'circle',
+              boxWidth: 4,   // ✅ Make legend markers smaller
+              boxHeight: 4,  // ✅ Keep proportions neat
+              padding: 10
+            }
+          },
           title: {
             display: true,
             color: '#fff',
@@ -186,19 +197,30 @@
         },
         scales: {
           x: {
-            title: { display: true, text: 'Radius (arbitrary units)', color: '#fff', font: { size: 14 } },
-            grid: { color: 'rgba(255,255,255,0.1)' },
-            ticks: { color: '#fff', font: { size: 12 } }
+            title: {
+              display: true,
+              text: 'Radius (arbitrary units)',
+              color: '#fff',
+              font: { size: 14 }
             },
-            y: {
-            title: { display: true, text: 'Velocity (arbitrary units)', color: '#fff', font: { size: 14 } },
-            min: 0,
-            max: Math.max(...expected_base) * 1.1, // Ensure the y-axis adapts to new data range
             grid: { color: 'rgba(255,255,255,0.1)' },
             ticks: { color: '#fff', font: { size: 12 } }
-            }
-            }
-            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Velocity (arbitrary units)',
+              color: '#fff',
+              font: { size: 14 }
+            },
+            min: 0,
+            max: 1.2,
+            grid: { color: 'rgba(255,255,255,0.1)' },
+            ticks: { color: '#fff', font: { size: 12 } }
+          }
+        }
+      }
+
             });
 
             const slider = document.getElementById('dmSlider');
