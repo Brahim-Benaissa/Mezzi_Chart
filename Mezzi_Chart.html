@@ -127,7 +127,7 @@
       for (const s of stars) {
         // Increase the radius based on dark matter factor
         // Stars closer to the center (smaller initial radii) will move more
-        const radiusFactor = 1 + (dmFactor * (1 - (s.initialRadius / 100))); // Apply stronger change to stars near the center
+        const radiusFactor = 1 - (dmFactor * (1 - (s.initialRadius / 100))); // Apply stronger change to stars near the center
         const r = s.initialRadius * radiusFactor;
 
         const x = s.x * w + r * Math.cos(Math.atan2(s.y - 0.5, s.x - 0.5)); // Update x position
@@ -178,14 +178,14 @@
         animation: { duration: 800, easing: 'easeOutQuart' },
         plugins: {
           legend: {
-            position: 'top', // ✅ Move legend to the top
+            position: 'top',
             labels: {
               color: '#fff',
               font: { size: 13 },
               usePointStyle: true,
               pointStyle: 'circle',
-              boxWidth: 4,   // ✅ Make legend markers smaller
-              boxHeight: 4,  // ✅ Keep proportions neat
+              boxWidth: 4,
+              boxHeight: 4,
               padding: 10
             }
           },
