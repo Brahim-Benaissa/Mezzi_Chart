@@ -87,11 +87,11 @@
     </div>
 
     <div class="slider-section">
-      <label for="dmSlider"><b>Add Dark Matter</b></label>
+      <label for="mezziSlider"><b>Add the Mezzi Effect</b></label>
       <br />
-      <input type="range" id="dmSlider" min="0" max="1" step="0.01" value="0" />
+      <input type="range" id="mezziSlider" min="0" max="1" step="0.01" value="0" />
       <div id="caption">
-        Classical Newtonian motion → rotation speed falls with distance.
+        Newtonian gravity, velocities follow Keplerian decline.
       </div>
     </div>
   </div>
@@ -115,19 +115,18 @@
       });
     }
 
-    // Function to draw the galaxy without the dark matter halo coloring
-    function drawGalaxy(dmFactor = 0) {
+    // Function to draw the galaxy with the Mezzi effect (stretching the galaxy)
+    function drawGalaxy(mezziFactor = 0) {
       const w = galaxyCanvas.width;
       const h = galaxyCanvas.height;
       const cx = w / 2;
       const cy = h / 2;
       gctx.clearRect(0, 0, w, h);
 
-      // Draw the stars with updated positions
+      // Draw the stars with updated positions (stretch the galaxy)
       for (const s of stars) {
-        // Increase the radius based on dark matter factor
-        // Stars closer to the center (smaller initial radii) will move more
-        const radiusFactor = 1 - (dmFactor * (1 - (s.initialRadius / 100))); // Apply stronger change to stars near the center
+        // Increase the radius based on the Mezzi effect
+        const radiusFactor = 1 - mezziFactor * (1 - (s.initialRadius / 100)); // Stretch stars' positions
         const r = s.initialRadius * radiusFactor;
 
         const x = s.x * w + r * Math.cos(Math.atan2(s.y - 0.5, s.x - 0.5)); // Update x position
@@ -220,60 +219,59 @@
           }
         }
       }
+    });
 
-            });
+    const slider = document.getElementById('mezziSlider');
+    const caption = document.getElementById('caption');
 
-            const slider = document.getElementById('dmSlider');
-            const caption = document.getElementById('caption');
+    // Resize canvases on window resize
+    function resizeCanvases() {
+      const wrapper = document.querySelector('.canvas-wrapper');
+      const w = wrapper.clientWidth;
+      const h = wrapper.clientHeight;
 
-            // Resize canvases on window resize
-            function resizeCanvases() {
-            const wrapper = document.querySelector('.canvas-wrapper');
-            const w = wrapper.clientWidth;
-            const h = wrapper.clientHeight;
+      galaxyCanvas.width = w;
+      galaxyCanvas.height = h;
+      chartCanvas.width = w;
+      chartCanvas.height = h;
 
-            galaxyCanvas.width = w;
-            galaxyCanvas.height = h;
-            chartCanvas.width = w;
-            chartCanvas.height = h;
+      drawGalaxy(parseFloat(slider.value));
+      chart.resize();
+    }
 
-            drawGalaxy(parseFloat(slider.value));
-            chart.resize();
-            }
+    // Event listener for window resizing
+    window.addEventListener('resize', resizeCanvases);
 
-            // Event listener for window resizing
-            window.addEventListener('resize', resizeCanvases);
+    // Event listener for slider input
+    slider.addEventListener('input', () => {
+      const mezzi = parseFloat(slider.value);
 
-            // Event listener for slider input
-            slider.addEventListener('input', () => {
-            const dm = parseFloat(slider.value);
+      // Interpolate between expected_base and mezzi_base based on slider
+      const updated = expected_base.map((v, i) => (1 - mezzi) * v + mezzi * mezzi_base[i]);
 
-            // Interpolate between expected_base and mezzi_base based on slider
-            const updated = expected_base.map((v, i) => (1 - dm) * v + dm * mezzi_base[i]);
+      // Update the expected velocity data on the chart
+      chart.data.datasets[1].data = updated;
 
-            // Update the expected velocity data on the chart
-            chart.data.datasets[1].data = updated;
+      // Update the chart's y-axis dynamically based on the new data range
+      const maxVelocity = Math.max(...updated) * 1.1; // Add a margin for better visibility
+      chart.options.scales.y.max = maxVelocity;
+      chart.update();
 
-            // Update the chart's y-axis dynamically based on the new data range
-            const maxVelocity = Math.max(...updated) * 1.1; // Add a margin for better visibility
-            chart.options.scales.y.max = maxVelocity;
-            chart.update();
+      // Redraw the galaxy
+      drawGalaxy(mezzi);
 
-            // Redraw the galaxy
-            drawGalaxy(dm);
+      // Update caption based on Mezzi effect slider value
+      if (mezzi < 0.3) {
+        caption.textContent = "Rotational velocities decrease with increasing radial distance";
+      } else if (mezzi < 0.7) {
+        caption.textContent = "Apparent compression begins, adjusting perceived distances and flattening rotation curves";
+      } else {
+        caption.textContent = "Galaxy appears compressed, leading to flat rotation curves.";
+      }
+    });
 
-            // Update caption based on dark matter slider value
-            if (dm < 0.3) {
-            caption.textContent = "Classical Newtonian motion → rotation speed falls with distance.";
-            } else if (dm < 0.7) {
-            caption.textContent = "Adding dark matter flattens the curve, keeping stars moving faster.";
-            } else {
-            caption.textContent = "With full dark matter effect → rotation curve remains flat, and the halo extends far beyond visible stars.";
-            }
-            });
-
-            // Initial setup
-            resizeCanvases();
-            </script>
-            </body>
-            </html>
+    // Initial setup
+    resizeCanvases();
+  </script>
+</body>
+</html>
