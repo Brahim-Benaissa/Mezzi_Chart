@@ -100,6 +100,25 @@
     .canvas-wrapper:hover #shareButton {
       opacity: 1;
     }
+
+    /* Toast notification */
+    #toast {
+      visibility: hidden;
+      min-width: 200px;
+      margin-left: -100px;
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      border-radius: 4px;
+      padding: 10px;
+      position: fixed;
+      z-index: 999;
+      left: 50%;
+      bottom: 30px;
+      font-size: 16px;
+      opacity: 0;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
   </style>
 </head>
 <body>
@@ -120,6 +139,9 @@
     </div>
   </div>
 
+  <!-- Toast notification -->
+  <div id="toast"></div>
+
   <script>
     const galaxyCanvas = document.getElementById("galaxyCanvas");
     const chartCanvas = document.getElementById("chartCanvas");
@@ -129,17 +151,17 @@
     const stars = [];
     const STAR_COUNT = 400;
     for (let i = 0; i < STAR_COUNT; i++) {
-      const r = Math.random() * 100; // Random radius
-      const angle = Math.random() * 2 * Math.PI; // Random angle
+      const r = Math.random() * 100;
+      const angle = Math.random() * 2 * Math.PI;
       stars.push({
-        x: 0.5 + (r / 200) * Math.cos(angle), // Normalized x position
-        y: 0.5 + (r / 200) * Math.sin(angle), // Normalized y position
-        brightness: Math.random() * 0.8 + 0.2, // Random brightness
-        initialRadius: r // Store the initial radius for each star
+        x: 0.5 + (r / 200) * Math.cos(angle),
+        y: 0.5 + (r / 200) * Math.sin(angle),
+        brightness: Math.random() * 0.8 + 0.2,
+        initialRadius: r
       });
     }
 
-    // Function to draw the galaxy with the Mezzi effect (stretching the galaxy)
+    // Draw galaxy with Mezzi effect
     function drawGalaxy(mezziFactor = 0) {
       const w = galaxyCanvas.width;
       const h = galaxyCanvas.height;
@@ -147,14 +169,11 @@
       const cy = h / 2;
       gctx.clearRect(0, 0, w, h);
 
-      // Draw the stars with updated positions (stretch the galaxy)
       for (const s of stars) {
-        // Increase the radius based on the Mezzi effect
-        const radiusFactor = 1 - mezziFactor * (1 - (s.initialRadius / 100)); // Stretch stars' positions
+        const radiusFactor = 1 - mezziFactor * (1 - (s.initialRadius / 100));
         const r = s.initialRadius * radiusFactor;
-
-        const x = s.x * w + r * Math.cos(Math.atan2(s.y - 0.5, s.x - 0.5)); // Update x position
-        const y = s.y * h + r * Math.sin(Math.atan2(s.y - 0.5, s.x - 0.5)); // Update y position
+        const x = s.x * w + r * Math.cos(Math.atan2(s.y - 0.5, s.x - 0.5));
+        const y = s.y * h + r * Math.sin(Math.atan2(s.y - 0.5, s.x - 0.5));
         gctx.beginPath();
         gctx.arc(x, y, 1.2, 0, 2 * Math.PI);
         gctx.fillStyle = `rgba(255, 230, 180, ${s.brightness})`;
@@ -162,8 +181,6 @@
       }
     }
 
-    // Rotation curve data
-    // const r_values = [0.27e+20, 0.54e+20, 0.81e+20, 1.08e+20, 1.35e+20, 1.62e+20, 1.89e+20, 2.15e+20, 2.42e+20];
     const r_values = [0.27, 0.54, 0.81, 1.08, 1.35, 1.62, 1.89, 2.15, 2.42];
     const observed_base = [24800, 46200, 60500, 69600, 77500, 82900, 84100, 85600, 87600];
     const mezzi_base = [85424, 105694, 113877, 116347, 115697, 113405, 110250, 106696, 103019];
@@ -212,35 +229,13 @@
               padding: 10
             }
           },
-          title: {
-            display: false,
-            color: '#fff',
-            font: { size: 18 }
-          }
+          title: { display: false, color: '#fff', font: { size: 18 } }
         },
         scales: {
-          x: {
-            title: {
-              display: true,
-              text: 'Radius (×10²⁰ m) SPARC data Galaxy UGC06399 ',
-              color: '#fff',
-              font: { size: 14 }
-            },
-            grid: { color: 'rgba(255,255,255,0.1)' },
-            ticks: { color: '#fff', font: { size: 12 } }
-          },
-          y: {
-            title: {
-              display: true,
-              text: 'Velocity (m/s)',
-              color: '#fff',
-              font: { size: 14 }
-            },
-            min: 0,
-            max: 130000,
-            grid: { color: 'rgba(255,255,255,0.1)' },
-            ticks: { color: '#fff', font: { size: 12 } }
-          }
+          x: { title: { display: true, text: 'Radius (×10²⁰ m) SPARC data Galaxy UGC06399', color: '#fff', font: { size: 14 } },
+               grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#fff', font: { size: 12 } } },
+          y: { title: { display: true, text: 'Velocity (m/s)', color: '#fff', font: { size: 14 } },
+               min: 0, max: 130000, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#fff', font: { size: 12 } } }
         }
       }
     });
@@ -248,65 +243,54 @@
     const slider = document.getElementById('mezziSlider');
     const caption = document.getElementById('caption');
 
-    // Resize canvases on window resize
     function resizeCanvases() {
       const wrapper = document.querySelector('.canvas-wrapper');
       const w = wrapper.clientWidth;
       const h = wrapper.clientHeight;
-
       galaxyCanvas.width = w;
       galaxyCanvas.height = h;
       chartCanvas.width = w;
       chartCanvas.height = h;
-
       drawGalaxy(parseFloat(slider.value));
       chart.resize();
     }
 
-    // Event listener for window resizing
     window.addEventListener('resize', resizeCanvases);
 
-    // Event listener for slider input
     slider.addEventListener('input', () => {
       const mezzi = parseFloat(slider.value);
-
-      // Interpolate between observed_base and mezzi_base based on slider
       const updated = mezzi_base.map((v, i) => (1 - mezzi) * v + mezzi * observed_base[i]);
-
-
-      // Update the expected velocity data on the chart
       chart.data.datasets[1].data = updated;
-
-      // Update the chart based on the new data range
       chart.update();
-
-      // Redraw the galaxy
       drawGalaxy(mezzi);
 
-      // Update caption based on Mezzi effect slider value
-      if (mezzi < 0.3) {
-        caption.textContent = "The rotational velocities are inferred from the true scale distances";
-      } else if (mezzi < 0.7) {
-        caption.textContent = "Apparent compression, shrinking the perceived distances";
-      } else {
-        caption.textContent = "Galaxy appears compressed, rotation curves appear flatter.";
-      }
+      if (mezzi < 0.3) caption.textContent = "The rotational velocities are inferred from the true scale distances";
+      else if (mezzi < 0.7) caption.textContent = "Apparent compression, shrinking the perceived distances";
+      else caption.textContent = "Galaxy appears compressed, rotation curves appear flatter.";
     });
 
-    // Initial setup
     resizeCanvases();
 
-    // Share Link functionality
+    // Share Link functionality using toast notification
     document.getElementById('shareButton').addEventListener('click', function() {
       const link = window.location.href;
       navigator.clipboard.writeText(link)
-        .then(() => {
-          alert('Link copied to clipboard!');
-        })
-        .catch(err => {
-          alert('Failed to copy the link.');
-        });
+        .then(() => showToast('Link copied to clipboard!'))
+        .catch(() => showToast('Failed to copy the link.'));
     });
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.style.visibility = 'visible';
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateY(0)';
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+        setTimeout(() => toast.style.visibility = 'hidden', 500);
+      }, 3000);
+    }
   </script>
 </body>
 </html>
