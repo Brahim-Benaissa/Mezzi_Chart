@@ -163,10 +163,10 @@
     }
 
     // Rotation curve data
-    const r_values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-    const observed_base = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
-    const expected_base = [1, 0.71, 0.58, 0.5, 0.45, 0.41, 0.38, 0.35, 0.33, 0.32];
-    const mezzi_base = [1.9, 1.8, 1.75, 1.7, 1.65, 1.6, 1.55, 1.5, 1.45, 1.4]; // New set of values
+    // const r_values = [0.27e+20, 0.54e+20, 0.81e+20, 1.08e+20, 1.35e+20, 1.62e+20, 1.89e+20, 2.15e+20, 2.42e+20];
+    const r_values = [0.27, 0.54, 0.81, 1.08, 1.35, 1.62, 1.89, 2.15, 2.42];
+    const observed_base = [24800, 46200, 60500, 69600, 77500, 82900, 84100, 85600, 87600];
+    const mezzi_base = [85424, 105694, 113877, 116347, 115697, 113405, 110250, 106696, 103019];
 
     const ctx = chartCanvas.getContext('2d');
     const chart = new Chart(ctx, {
@@ -185,8 +185,8 @@
             tension: 0.35
           },
           {
-            label: 'Expected Velocity',
-            data: expected_base,
+            label: 'Calculated Velocity',
+            data: mezzi_base,
             borderColor: '#00b4d8',
             borderWidth: 2,
             pointRadius: 4,
@@ -222,7 +222,7 @@
           x: {
             title: {
               display: true,
-              text: 'Radius (arbitrary units)',
+              text: 'Radius (×10²⁰ m) SPARC data Galaxy UGC06399 ',
               color: '#fff',
               font: { size: 14 }
             },
@@ -232,12 +232,12 @@
           y: {
             title: {
               display: true,
-              text: 'Velocity (arbitrary units)',
+              text: 'Velocity (m/s)',
               color: '#fff',
               font: { size: 14 }
             },
             min: 0,
-            max: 1.2,
+            max: 130000,
             grid: { color: 'rgba(255,255,255,0.1)' },
             ticks: { color: '#fff', font: { size: 12 } }
           }
@@ -270,15 +270,14 @@
     slider.addEventListener('input', () => {
       const mezzi = parseFloat(slider.value);
 
-      // Interpolate between expected_base and mezzi_base based on slider
-      const updated = expected_base.map((v, i) => (1 - mezzi) * v + mezzi * mezzi_base[i]);
+      // Interpolate between observed_base and mezzi_base based on slider
+      const updated = mezzi_base.map((v, i) => (1 - mezzi) * v + mezzi * observed_base[i]);
+
 
       // Update the expected velocity data on the chart
       chart.data.datasets[1].data = updated;
 
-      // Update the chart's y-axis dynamically based on the new data range
-      const maxVelocity = Math.max(...updated) * 1.1; // Add a margin for better visibility
-      chart.options.scales.y.max = maxVelocity;
+      // Update the chart based on the new data range
       chart.update();
 
       // Redraw the galaxy
@@ -286,11 +285,11 @@
 
       // Update caption based on Mezzi effect slider value
       if (mezzi < 0.3) {
-        caption.textContent = "Rotational velocities decrease with increasing radial distance";
+        caption.textContent = "The rotational velocities are inferred from the true scale distances";
       } else if (mezzi < 0.7) {
-        caption.textContent = "Apparent compression begins, adjusting perceived distances and flattening rotation curves";
+        caption.textContent = "Apparent compression, shrinking the perceived distances";
       } else {
-        caption.textContent = "Galaxy appears compressed, leading to flat rotation curves.";
+        caption.textContent = "Galaxy appears compressed, rotation curves appear flatter.";
       }
     });
 
